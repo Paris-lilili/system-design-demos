@@ -1,4 +1,10 @@
-## Verify result
+## What this verifies
+
+When the same payment request arrives concurrently (a customer double-clicks,
+or a client retries after a timeout), the system must record the charge exactly once. 
+Otherwise the customer is charged duplicated.
+
+## How to Run
 ```
 (launch docker desktop firstly)
 

@@ -10,7 +10,7 @@ import (
 )
 
 // hardcode data source name rather than reading from environment to simplify demo
-// Postgres default port is 5432, so localhost port random pick a close number
+// Postgres default port is 5432, so pick localhost port 5433 to avoid colliding with a local Postgres on 5432
 const dsn = "postgres://postgres:demo@localhost:5433/paydemo"
 
 func main() {
@@ -53,7 +53,8 @@ func main() {
 			defer wg.Done()
 
 			// QueryRow executes a query that is expected to return at most one row(return data).
-			// Scan read the return data into insertedID, if query failed -> no rows were found, it returns ErrNoRows.
+			// Scan read the return data into insertedID 
+			// if conflict, this insert is skipped, RETURNING yields no row -> Scan returns ErrNoRows
 			// simulate duplicate insert, so insert value is fixed
 			var insertedID int
 			err := pool.QueryRow(ctx, `
