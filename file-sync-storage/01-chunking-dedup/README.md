@@ -40,11 +40,21 @@ two files are same, total bytes: 1048676
   ]
 }
 
-# run again, all chunks are reused
+# Test 1. run again, all chunks are reused
 ❯ go run main.go
 New chunks number: 0, reused chunks number: 17, total chunks number: 17, they should be same
 two files are same, total bytes: 1048676
 
+# Test 2.replace one byte, only one chunk is updated
+❯ go run main.go oneByte
+New chunks number: 1, reused chunks number: 16, total chunks number: 17, they should be same
+two files are same, total bytes: 1048676
+
+# Test 3. insert 1 byte(X) at the beginning
+# All chunks need to be re-uploaded because the chunk size is fixed, inserting one byte at the head move all subsequent byte forword by one position, so every 64kb window includs different content, also every hash changes, although most of content is not changed.
+❯ printf 'X' | cat - random.bin > tmp && mv tmp random.bin && go run main.go
+New chunks number: 17, reused chunks number: 0, total chunks number: 17, they should be same
+two files are same, total bytes: 1048677
 
 ❯ tree
 .

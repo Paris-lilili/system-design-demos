@@ -35,9 +35,15 @@ func main() {
 	checkErr(os.MkdirAll(chunkFolderPath, 0755)) //idempotency, if exist do nothing
 
 	// 2. stream the file via a fixed-size buffer
-	f, err := os.Open(randomFile)
+	f, err := os.Open(randomFile) // ⚠️ return file for reading only
 	checkErr(err)
 	defer f.Close()
+
+	// Test 1. replace one byte for original file
+	// expect only the first chunk hash value change
+	if len(os.Args) > 1 && os.Args[1] == "oneByte" {
+		replaceOneByte(3)
+	}
 
 	buf := make([]byte, 64*1024) // 64kb
 	var newChunks, reusedChunks int
@@ -163,6 +169,25 @@ func compareTwoFiles() bool {
 	// Sum appends the current hash(digest) to b(nil) and returns the resulting slice. only compare digest hash itself.
 	return bytes.Equal(hasher1.Sum(nil), hasher2.Sum(nil))
 }	
+
+func replaceOneByte(index int64) {
+	// Open file here rather than using same file handler to avoid the offset staying at index
+	// f, err := os.Open(randomFile) ⚠️ return file for reading only
+	 // why 0? Because if the file does not exist, and the O_CREATE flag is passed, it is created with mode perm. Now no O_CREATE flag, doesn't need perm 
+	f, err := os.OpenFile(randomFile, os.O_RDWR, 0)
+	checkErr(err)
+	defer f.Close()
+
+	// Seek sets the offset for the Write on file to offset
+	// SeekStart=0 means relative for the original file
+	_, err = f.Seek(index, io.SeekStart)
+	checkErr(err)
+
+	// write 170 to replace index position byte
+	b := []byte{0xAA}
+	_, err = f.Write(b)
+	checkErr(err)
+}
 
 func checkErr(err error) {
 	if err != nil {
